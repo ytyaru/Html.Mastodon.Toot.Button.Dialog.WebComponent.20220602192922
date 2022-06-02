@@ -9,6 +9,7 @@ class TootButton extends HTMLElement {
         this.okMsg = 'トゥートしました！'
         this.ngMsg = 'キャンセルしました。'
         //this.#redirectCallback()
+        this.tootEvent = new CustomEvent('toot');
     }
     static get observedAttributes() {
         return ['domain', 'status', 'img-src', 'img-size', 'title', 'ok-msg', 'ng-msg'];
@@ -22,7 +23,7 @@ class TootButton extends HTMLElement {
         
         shadow.innerHTML = `<style>${this.#cssBase()}${this.#cssButton()}${this.#cssAnimation()}${this.#cssFocsAnimation()}</style>${button.outerHTML}` 
         // pointer系 = mouse系 + touch系 + pen系
-        this.shadowRoot.querySelector('img').addEventListener('pointerdown', (e)=>{ e.target.classList.add('jump'); }, false);
+        //this.shadowRoot.querySelector('img').addEventListener('pointerdown', (e)=>{ e.target.classList.add('jump'); }, false);
         //this.shadowRoot.querySelector('img').addEventListener('pointerover', (e)=>{ e.target.classList.add('flip'); }, false);
         //this.shadowRoot.querySelector('img').addEventListener('mouseover', (e)=>{ e.target.classList.add('flip'); }, false);
         this.shadowRoot.querySelector('img').addEventListener('animationend', (e)=>{ e.target.classList.remove('jump'); e.target.classList.remove('flip'); }, false);
@@ -114,9 +115,9 @@ button:focus, button:focus img {
         const url = new URL(location.href)
         // マストドンAPI oauth/authorize でリダイレクトされた場合（認証を拒否した場合）
         if(url.searchParams.has('error') && url.searchParams.get('domain')) {
-            console.log(this.domain, url.searchParams.get('domain'))
+            console.debug(this.domain, url.searchParams.get('domain'))
             if (this.domain === url.searchParams.get('domain')) {
-                console.log((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
+                console.debug((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
                 alert((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
             }
         }
@@ -147,6 +148,10 @@ button:focus, button:focus img {
             console.debug(res)
             document.getElementById('res').value = JSON.stringify(res)
             sessionStorage.removeItem(`status`)
+            //this.dispatchEvent(this.tootEvent);
+            //this.classList.remove('jump');
+            //this.classList.remove('flip');
+            this.dispatchEvent(new CustomEvent('toot', {detail: res}));
             console.debug('----- 以上 -----')
         }
     }
@@ -191,7 +196,7 @@ button:focus, button:focus img {
         else { return (parseInt(this.imgSize)) ? [parseInt(this.imgSize), parseInt(this.imgSize)] : [64, 64] }
     }
     #getImgSrc() {
-        console.log(this.domain, this.imgSize)
+        console.debug(this.domain, this.imgSize)
         if (this.imgSrc) { return this.imgSrc }
         //return `http://www.google.com/s2/favicons?domain=${this.domain}`
         if (this.domain) { return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${this.domain}&size=${this.imgSize}` }
@@ -213,17 +218,23 @@ button:focus, button:focus img {
         */
     }
     #addListenerEvent() { // トゥートボタンを押したときの動作を実装する
+        //this.addEventListener('pointerdown', async(event) => {
         this.addEventListener('click', async(event) => {
-            console.log('クリック')
+            console.debug('クリック')
+            event.target.classList.add('jump');
             const domain = (this.domain) ? this.domain : this.#getDomain()
             this.domain = domain
-            console.log(domain)
+            console.debug(domain)
             const tooter = new Tooter(domain)
             const access_token = sessionStorage.getItem(`${domain}-access_token`)
             if (access_token && tooter.verify(access_token)) {
                 console.debug('既存のトークンが有効なため即座にトゥートします。');
                 const res = await tooter.toot(access_token, this.status)
-                console.debug(res)
+                //console.debug(res)
+                //this.dispatchEvent(this.tootEvent);
+                //event.target.classList.remove('jump');
+                //event.target.classList.remove('flip');
+                this.dispatchEvent(new CustomEvent('toot', {detail: res}));
                 document.getElementById('res').value = JSON.stringify(res)
             } else {
                 console.debug('既存のトークンがないか無効のため、新しいアクセストークンを発行します。');

@@ -24,7 +24,7 @@ class TootDialog extends HTMLElement {
         console.debug(button.innerHTML)
         //shadow.innerHTML = `<style>${this.#cssBase()}${this.#cssButton()}${this.#cssAnimation()}${this.#cssFocsAnimation()}</style>${button.outerHTML}` 
         // pointer系 = mouse系 + touch系 + pen系
-        this.shadowRoot.querySelector('img').addEventListener('pointerdown', (e)=>{ e.target.classList.add('jump'); }, false);
+        //this.shadowRoot.querySelector('img').addEventListener('pointerdown', (e)=>{ e.target.classList.add('jump'); }, false);
         //this.shadowRoot.querySelector('img').addEventListener('pointerover', (e)=>{ e.target.classList.add('flip'); }, false);
         //this.shadowRoot.querySelector('img').addEventListener('mouseover', (e)=>{ e.target.classList.add('flip'); }, false);
         this.shadowRoot.querySelector('img').addEventListener('animationend', (e)=>{ e.target.classList.remove('jump'); e.target.classList.remove('flip'); }, false);
@@ -166,7 +166,6 @@ button:focus, button:focus img {
     }
     #makeButtonElement() {
         const button = document.createElement('button')
-        //a.setAttribute('title', this.title)
         button.setAttribute('id', 'toot-button')
         button.setAttribute('title', this.title)
         return button
@@ -189,28 +188,6 @@ button:focus, button:focus img {
     }
     #getImgSrc() {
         return `./asset/image/mastodon_mascot.svg`
-        /*
-        console.debug(this.domain, this.imgSize)
-        if (this.imgSrc) { return this.imgSrc }
-        //return `http://www.google.com/s2/favicons?domain=${this.domain}`
-        if (this.domain) { return `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${this.domain}&size=${this.imgSize}` }
-        return `./asset/image/mastodon_mascot.svg`
-        */
-        /*
-        if (this.imgSrc) { return this.imgSrc }
-        if (this.img) {
-            const num = parseInt(this.img)
-            if (isNaN(num)) {
-                const key = this.icon.getKey(this.img, this.imgSize)
-                return (this.icon.Base64.has(key)) ? this.icon.Base64.get(key) : this.icon.Default }
-            else {
-                if (this.icon.Base64.size <= num) { return this.icon.Default }
-                if (num < this.icon.Base64.size) { return [...this.icon.Base64.values()][num] }
-                return this.icon.get(this.img, this.imgSize)
-            }
-        }
-        return this.icon.Default
-        */
     }
     #makeDialog() {
         const dialog = document.createElement('dialog')
@@ -240,20 +217,9 @@ button:focus, button:focus img {
     }
     #addListenerEvent(shadow) { // トゥートボタンを押したときの動作を実装する
         console.log(this.shadowRoot)
-        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event) => {
-            this.shadowRoot.getElementById('toot-dialog').showModal();
-            const status = this.shadowRoot.getElementById('status');
-            status.innerText = this.status
-            status.innerHTML += '<br>' + location.href
-            /*
-            if ('init' in status.dataset) { status.innerHTML = status.dataset.init }
-            if ('init' in .dataset) { status.innerHTML = status.dataset.init }
-            status.innerHTML += '<br>' + location.href
-            */
-            status.focus();
-            this.#setCaretStart(status)
-            this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
-        });
+        //this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
+        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ this.#show(event.target) });
+        this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => { this.#show(event.target) });
         console.debug('--------------------------')
         console.debug(this.shadowRoot.getElementById('status'))
         this.shadowRoot.getElementById('status').addEventListener('input', (event) => {
@@ -266,16 +232,37 @@ button:focus, button:focus img {
         //for (const button of this.shadowRoot.getElementsByName('toot-button')) {
         for (const button of this.shadowRoot.querySelectorAll(`toot-button`)) {
             button.addEventListener('click', (event) => {
+                //event.target.classList.add('jump');
                 console.debug('トゥートボタンを押した。値を渡す。')
                 event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
             });
+            button.addEventListener('pointerdown', (event) => {
+                //event.target.classList.add('jump');
+                console.debug('トゥートボタンを押した。値を渡す。')
+                event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
+            });
+            button.addEventListener('toot', (event) => {
+                console.debug(event)
+                console.debug(event.detail)
+                console.debug(JSON.stringify(event.detail))
+                if (event.detail.hasOwnProperty('error')) { this.#toast('トゥートに失敗しました……') }
+                else {
+                    this.#toast('トゥートしました！')
+                    this.shadowRoot.getElementById('toot-dialog').close()
+                }
+                //document.getElementById('res').value = JSON.stringify(event.json)
+            });
         }
-        /*
-        this.shadowRoot.getElementByName('toot-button').addEventListener('click', (event) => {
-            console.debug('トゥートボタンを押した。値を渡す。')
-            event.target.setAttribute('status', this.shadowRoot.getElementById('status'))
-        });
-        */
+    }
+    #show(target) {
+        target.classList.add('jump');
+        this.shadowRoot.getElementById('toot-dialog').showModal();
+        const status = this.shadowRoot.getElementById('status');
+        status.innerText = this.status
+        status.innerHTML += '<br>' + location.href
+        status.focus();
+        this.#setCaretStart(status)
+        this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
     }
     #setCaretStart(target) {
         //status.setSelectionRange(0, 0);
@@ -285,6 +272,17 @@ button:focus, button:focus img {
         range.collapse(true)
         sel.removeAllRanges()
         sel.addRange(range)
+    }
+    #toot() {
+        event.target.classList.add('jump');
+        console.debug('トゥートボタンを押した。値を渡す。')
+        event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
+
+    }
+    #toast(message) {
+        console.debug(message)
+        if (Toastify) { Toastify({text: message, position:'center'}).showToast(); }
+        else { alert(message) }
     }
 }
 window.addEventListener('DOMContentLoaded', (event) => {
