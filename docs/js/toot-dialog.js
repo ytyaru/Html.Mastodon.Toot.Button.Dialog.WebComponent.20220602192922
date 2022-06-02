@@ -218,8 +218,11 @@ button:focus, button:focus img {
     #addListenerEvent(shadow) { // トゥートボタンを押したときの動作を実装する
         console.log(this.shadowRoot)
         //this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
-        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ this.#show(event.target) });
-        this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => { this.#show(event.target) });
+        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ console.log('click', event.target); this.#show(event.target) });
+        this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
+            // なぜかthis.#show(event.target)だとフォーカスが当たらない。clickなら成功するがpointerdownだと失敗する理由が不明。なのでもうclickイベントを発火させることにした。
+            this.shadowRoot.getElementById('status').dispatchEvent(new Event('click'))
+        });
         console.debug('--------------------------')
         console.debug(this.shadowRoot.getElementById('status'))
         this.shadowRoot.getElementById('status').addEventListener('input', (event) => {
@@ -261,14 +264,15 @@ button:focus, button:focus img {
         status.innerText = this.status
         status.innerHTML += '<br>' + location.href
         status.focus();
-        this.#setCaretStart(status)
-        this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
+        //this.#setCaretStart(status)
+        //this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
     }
-    #setCaretStart(target) {
+    #setCaretStart(target) { // キャレットを先頭にセットする
         //status.setSelectionRange(0, 0);
         var range = document.createRange()
         var sel = window.getSelection()
         range.setStart(target.childNodes[0], 0)
+        //range.setEnd(target.childNodes[0], 0)
         range.collapse(true)
         sel.removeAllRanges()
         sel.addRange(range)
