@@ -45,7 +45,7 @@ class TootDialog extends HTMLElement {
 #toot-dialog {
     z-index: 1;
 }
-.Toastify { /* dialog よりも手前に表示したい */
+.toastify { /* dialog よりも手前に表示したい */
     z-index: 9;
 }
 #toot-dialog #status {
@@ -281,7 +281,8 @@ button:focus, button:focus img {
     }
     #show(target) {
         target.classList.add('jump');
-        this.shadowRoot.getElementById('toot-dialog').showModal();
+        //this.shadowRoot.getElementById('toot-dialog').showModal();
+        this.shadowRoot.getElementById('toot-dialog').show();
         const status = this.shadowRoot.getElementById('status');
         status.innerText = this.status
         status.innerHTML += '<br>' + location.href
