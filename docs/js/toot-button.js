@@ -84,10 +84,12 @@ button {
   width: ${this.imgSize}px;
   height: ${this.imgSize}px;
 }
+/* アニメが完了するまでクリックできなくなる
 button:focus {
   transform-origin: 50% 50%;
   animation: flip .20s linear alternate;
 }
+*/
 button, button img {
   width: ${this.imgSize}px;
   height: ${this.imgSize}px;
@@ -284,7 +286,7 @@ button:focus, button:focus img {
         } else {
             console.debug('既存のトークンがないか無効のため、新しいアクセストークンを発行します。');
             const app = await tooter.createApp().catch(e=>alert(e))
-            this.#errorApi(res)
+            this.#errorApi(app)
             console.debug(app.client_id)
             console.debug(app.client_secret)
             console.debug(sessionStorage.getItem(`${domain}-app`))
