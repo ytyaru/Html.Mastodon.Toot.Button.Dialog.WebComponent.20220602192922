@@ -47,12 +47,18 @@ class Tooter {
     async createApp() {
         console.debug('----- apps -----')
         const params = {
-            client_name: `Test Application by API redirect_uris=${this.redirect_uri}`,
+            client_name: this.#createClientName(),
             redirect_uris: `${this.redirect_uri}`,
             scopes: this.scope,
             website: `${this.redirect_uri}`,
         };
         return await this.post('api/v1/apps', null, params)
+    }
+    #createClientName() {
+        // mstdn.jp では60字以下でないとエラーになる
+        //    client_name: `Test Application by API redirect_uris=${this.redirect_uri}`,
+        // {"error":"Validation failed: Application name is too long (maximum is 60 characters)"}
+        return `toot requester`
     }
     authorize(client_id) {
         console.debug('----- authorize -----')
