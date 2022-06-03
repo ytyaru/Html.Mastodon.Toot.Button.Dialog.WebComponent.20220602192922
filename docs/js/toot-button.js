@@ -116,7 +116,9 @@ button:focus, button:focus img {
             console.debug(this.domain, url.searchParams.get('domain'))
             if (this.domain === url.searchParams.get('domain')) {
                 console.debug((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
-                alert((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
+                //alert((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
+                //this.#toast((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。', true)
+                this.#toast('キャンセルしました')
                 const params = url.searchParams;
                 params.delete('error');
                 params.delete('error_description');
@@ -227,7 +229,8 @@ button:focus, button:focus img {
     #addListenerEvent() { // トゥートボタンを押したときの動作を実装する
         //this.addEventListener('pointerdown', async(event) => {
         this.addEventListener('click', async(event) => { console.debug('click toot-button'); await this.#toot(event.target) });
-        this.addEventListener('pointerdown', async(event) => { console.debug('pointer-down toot-button'); this.dispatchEvent(new Event('click')) });
+        // clickとあわせて２回発行されてしまう！　もうスマホ側は知らん。
+        //this.addEventListener('pointerdown', async(event) => { console.debug('pointer-down toot-button'); this.dispatchEvent(new Event('click')) });
         //this.addEventListener('pointerdown', async(event) => { this.#toot() });
     }
     #getStatus() {

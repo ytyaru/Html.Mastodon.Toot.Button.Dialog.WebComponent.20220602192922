@@ -227,10 +227,12 @@ button:focus, button:focus img {
         console.debug(this.shadowRoot)
         //this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
         this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ console.debug('click', event.target); this.#show(event.target) });
+        /* clickとあわせて２回発行されてしまう！　もうスマホ側は知らん。
         this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
             // なぜかthis.#show(event.target)だとフォーカスが当たらない。clickなら成功するがpointerdownだと失敗する理由が不明。なのでもうclickイベントを発火させることにした。
             this.shadowRoot.getElementById('status').dispatchEvent(new Event('click'))
         });
+        */
         console.debug('--------------------------')
         console.debug(this.shadowRoot.getElementById('status'))
         this.shadowRoot.getElementById('status').addEventListener('input', (event) => {
@@ -262,7 +264,8 @@ button:focus, button:focus img {
             });
             */
             button.addEventListener('click', (event) => {event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)});
-            button.addEventListener('pointerdown', (event) => {event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)});
+            // clickとpointerdownで２回発行されてしまう！
+            //button.addEventListener('pointerdown', (event) => {event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)});
             button.addEventListener('toot', (event) => {
                 console.debug(event)
                 console.debug(event.detail)
@@ -286,6 +289,8 @@ button:focus, button:focus img {
         const status = this.shadowRoot.getElementById('status');
         status.innerText = this.status
         status.innerHTML += '<br>' + location.href
+        this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
+        console.log(this.shadowRoot.getElementById('status-remaining').innerHTML)
         status.focus();
         //this.#setCaretStart(status)
         //this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
