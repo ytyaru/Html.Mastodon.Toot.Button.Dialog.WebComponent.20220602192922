@@ -4,7 +4,8 @@ class Tooter {
         url.searchParams.delete('code');
         this.redirect_uri = url.href
         this.domain = domain
-        this.scope = 'read write follow push'
+        //this.scope = 'read write follow push'
+        this.scope = 'write:statuses'
     }
     getDefaultJsonHeaders() { return {
         'Accept': 'application/json',
@@ -62,9 +63,10 @@ class Tooter {
     }
     authorize(client_id) {
         console.debug('----- authorize -----')
-        const scope='read+write+follow+push'
+        //const scope='read+write+follow+push'
         const redirect_uri = this.redirect_uri + `?domain=${this.domain}`
-        const url = new URL(`https://${this.domain}/oauth/authorize?client_id=${client_id}&scope=${scope}&redirect_uri=${redirect_uri}&response_type=code`).href
+        //const url = new URL(`https://${this.domain}/oauth/authorize?client_id=${client_id}&scope=${scope}&redirect_uri=${redirect_uri}&response_type=code`).href
+        const url = new URL(`https://${this.domain}/oauth/authorize?response_type=code&client_id=${client_id}&scope=${this.scope}&redirect_uri=${redirect_uri}`).href
         console.debug(url)
         window.location.href = url
     }
