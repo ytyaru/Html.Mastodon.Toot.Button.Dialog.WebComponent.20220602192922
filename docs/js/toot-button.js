@@ -275,8 +275,10 @@ button:focus, button:focus img {
             console.debug(app)
             console.debug(app.client_id)
             console.debug(app.client_secret)
+            console.debug(sessionStorage.getItem(`${domain}-app`))
             console.debug(sessionStorage.getItem(`${domain}-client_id`))
             console.debug(sessionStorage.getItem(`${domain}-client_secret`))
+            sessionStorage.setItem(`${domain}-app`, JSON.stringify(app));
             sessionStorage.setItem(`${domain}-client_id`, app.client_id);
             sessionStorage.setItem(`${domain}-client_secret`, app.client_secret);
             const status = document.getElementById('status')
