@@ -13,7 +13,7 @@ class TootDialog extends HTMLElement {
         return ['domain', 'status', 'img-src', 'img-size', 'title', 'ok-msg', 'ng-msg'];
     }
     async connectedCallback() {
-        console.log('=======================================')
+        console.debug('=======================================')
         //const shadow = this.attachShadow({ mode: 'closed' });
         const shadow = this.attachShadow({ mode: 'open' }); // マウスイベント登録に必要だった。CSS的にはclosedにしたいのに。l
 
@@ -41,6 +41,12 @@ class TootDialog extends HTMLElement {
     width: 90%;
     height: 80%;
     border: 4mm ridge rgba(211, 220, 50, .6);
+}
+#toot-dialog {
+    z-index: 1;
+}
+.Toastify { /* dialog よりも手前に表示したい */
+    z-index: 9;
 }
 #toot-dialog #status {
     padding: 0.25em;
@@ -132,10 +138,12 @@ button {
   width: ${this.imgSize}px;
   height: ${this.imgSize}px;
 }
+/* アニメが完了するまでクリックできなくなる
 button:focus {
   transform-origin: 50% 50%;
   animation: flip .20s linear alternate;
 }
+*/
 button, button img {
   width: ${this.imgSize}px;
   height: ${this.imgSize}px;
@@ -216,9 +224,9 @@ button:focus, button:focus img {
         return dialog
     }
     #addListenerEvent(shadow) { // トゥートボタンを押したときの動作を実装する
-        console.log(this.shadowRoot)
+        console.debug(this.shadowRoot)
         //this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
-        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ console.log('click', event.target); this.#show(event.target) });
+        this.shadowRoot.getElementById('toot-button').addEventListener('click', (event)=>{ console.debug('click', event.target); this.#show(event.target) });
         this.shadowRoot.getElementById('toot-button').addEventListener('pointerdown', (event) => {
             // なぜかthis.#show(event.target)だとフォーカスが当たらない。clickなら成功するがpointerdownだと失敗する理由が不明。なのでもうclickイベントを発火させることにした。
             this.shadowRoot.getElementById('status').dispatchEvent(new Event('click'))
@@ -231,9 +239,17 @@ button:focus, button:focus img {
             console.debug(remaining)
             this.shadowRoot.getElementById('status-remaining').textContent = remaining;
             console.debug(event.target.innerText)
+            // トゥートしたときstatusが空値になる問題への対応。ボタンの数だけデータが冗長になってしまうが、TootButton側を改変せずに済む。
+            for (const button of this.shadowRoot.querySelectorAll(`toot-button`)) {
+                button.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
+                console.debug(button.getAttribute('status'))
+            }
         });
         //for (const button of this.shadowRoot.getElementsByName('toot-button')) {
         for (const button of this.shadowRoot.querySelectorAll(`toot-button`)) {
+            /*
+            トゥートしたときstatusが空値になる問題。
+            TootButtonのほうでもclickイベントを実装していて、そちらでtootをリクエストしている。が、そこで渡すstatusはここでセットしている。両方で定義されたclickイベントのうち、どちらが先に実行されるのか不定なのでは？
             button.addEventListener('click', (event) => {
                 //event.target.classList.add('jump');
                 console.debug('トゥートボタンを押した。値を渡す。')
@@ -244,6 +260,9 @@ button:focus, button:focus img {
                 console.debug('トゥートボタンを押した。値を渡す。')
                 event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
             });
+            */
+            button.addEventListener('click', (event) => {event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)});
+            button.addEventListener('pointerdown', (event) => {event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)});
             button.addEventListener('toot', (event) => {
                 console.debug(event)
                 console.debug(event.detail)
@@ -252,6 +271,9 @@ button:focus, button:focus img {
                 else {
                     this.#toast('トゥートしました！')
                     this.shadowRoot.getElementById('toot-dialog').close()
+                    console.debug(event.target)
+                    console.debug(event.detail)
+                    this.dispatchEvent(new CustomEvent('toot', {detail: event.detail}));
                 }
                 //document.getElementById('res').value = JSON.stringify(event.json)
             });
@@ -276,12 +298,6 @@ button:focus, button:focus img {
         range.collapse(true)
         sel.removeAllRanges()
         sel.addRange(range)
-    }
-    #toot() {
-        event.target.classList.add('jump');
-        console.debug('トゥートボタンを押した。値を渡す。')
-        event.target.setAttribute('status', this.shadowRoot.getElementById('status').innerText)
-
     }
     #toast(message) {
         console.debug(message)

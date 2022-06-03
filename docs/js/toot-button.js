@@ -8,8 +8,6 @@ class TootButton extends HTMLElement {
         this.title = 'トゥートする'
         this.okMsg = 'トゥートしました！'
         this.ngMsg = 'キャンセルしました。'
-        //this.#redirectCallback()
-        this.tootEvent = new CustomEvent('toot');
     }
     static get observedAttributes() {
         return ['domain', 'status', 'img-src', 'img-size', 'title', 'ok-msg', 'ng-msg'];
@@ -119,6 +117,10 @@ button:focus, button:focus img {
             if (this.domain === url.searchParams.get('domain')) {
                 console.debug((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
                 alert((url.searchParams.has('error_description')) ? decodeURI(url.searchParams.get('error_description')) : '認証エラーです。')
+                const params = url.searchParams;
+                params.delete('error');
+                params.delete('error_description');
+                history.replaceState('', '', url.pathname);
             }
         }
         // マストドンAPI oauth/authorize でリダイレクトされた場合（認証に成功した場合）
@@ -144,16 +146,21 @@ button:focus, button:focus img {
             const accessToken = json.access_token
             const v = await tooter.verify(accessToken)
             console.debug(v)
-            const res = await tooter.toot(accessToken, this.status)
+            const res = await tooter.toot(accessToken, status)
             console.debug(res)
-            document.getElementById('res').value = JSON.stringify(res)
             sessionStorage.removeItem(`status`)
-            //this.dispatchEvent(this.tootEvent);
             //this.classList.remove('jump');
             //this.classList.remove('flip');
-            this.dispatchEvent(new CustomEvent('toot', {detail: res}));
+            this.#tootEvent(res)
             console.debug('----- 以上 -----')
         }
+    }
+    #tootEvent(json) { 
+        const params = {
+            domain: this.domain,
+            json: json,
+        }
+        this.dispatchEvent(new CustomEvent('toot', {detail: params}));
     }
     async #make() {
         const button = await this.#makeSendButton()
@@ -219,39 +226,13 @@ button:focus, button:focus img {
     }
     #addListenerEvent() { // トゥートボタンを押したときの動作を実装する
         //this.addEventListener('pointerdown', async(event) => {
-        this.addEventListener('click', async(event) => {
-            console.debug('クリック')
-            event.target.classList.add('jump');
-            const domain = (this.domain) ? this.domain : this.#getDomain()
-            this.domain = domain
-            console.debug(domain)
-            const tooter = new Tooter(domain)
-            const access_token = sessionStorage.getItem(`${domain}-access_token`)
-            if (access_token && tooter.verify(access_token)) {
-                console.debug('既存のトークンが有効なため即座にトゥートします。');
-                const res = await tooter.toot(access_token, this.status)
-                //console.debug(res)
-                //this.dispatchEvent(this.tootEvent);
-                //event.target.classList.remove('jump');
-                //event.target.classList.remove('flip');
-                this.dispatchEvent(new CustomEvent('toot', {detail: res}));
-                document.getElementById('res').value = JSON.stringify(res)
-            } else {
-                console.debug('既存のトークンがないか無効のため、新しいアクセストークンを発行します。');
-                const app = await tooter.createApp().catch(e=>alert(e))
-                console.debug(app)
-                console.debug(app.client_id)
-                console.debug(app.client_secret)
-                console.debug(sessionStorage.getItem(`${domain}-client_id`))
-                console.debug(sessionStorage.getItem(`${domain}-client_secret`))
-                sessionStorage.setItem(`${domain}-client_id`, app.client_id);
-                sessionStorage.setItem(`${domain}-client_secret`, app.client_secret);
-                const status = document.getElementById('status')
-                //sessionStorage.setItem(`status`, (status.hasAttribute('contenteditable')) ? status.innerText : status.value);
-                sessionStorage.setItem(`status`, this.status);
-                tooter.authorize(app.client_id)
-            }
-        });
+        this.addEventListener('click', async(event) => { console.debug('click toot-button'); await this.#toot(event.target) });
+        this.addEventListener('pointerdown', async(event) => { console.debug('pointer-down toot-button'); this.dispatchEvent(new Event('click')) });
+        //this.addEventListener('pointerdown', async(event) => { this.#toot() });
+    }
+    #getStatus() {
+        if (this.status) { return this.status }
+        // toot-dialogのtoot-status要素から取得しようと思ったが、shadow要素のためか取得できなかった。
     }
     #getDomain() {
         const domain = window.prompt('インスタンスのURLかドメイン名を入力してください。');
@@ -262,6 +243,56 @@ button:focus, button:focus img {
         // 入力したドメインが存在するか（リンク切れでないか）
         // 入力したドメインはマストドンのインスタンスか（どうやってそれを判定するか）
         return true
+    }
+    async #toot(target) {
+        console.debug('トゥートボタンを押しました。')
+        const status = this.#getStatus()
+        console.debug(status)
+        if (!status || 0 === status.trim().length) {
+            this.#toast('トゥート内容を入れてください。', true)
+            return
+        }
+        //event.target.classList.add('jump');
+        target.classList.add('jump');
+        const domain = (this.domain) ? this.domain : this.#getDomain()
+        this.domain = domain
+        console.debug(domain)
+        const tooter = new Tooter(domain)
+        const access_token = sessionStorage.getItem(`${domain}-access_token`)
+        if (access_token && tooter.verify(access_token)) {
+            console.debug('既存のトークンが有効なため即座にトゥートします。');
+            //const res = await tooter.toot(access_token, this.status)
+            const res = await tooter.toot(access_token, this.#getStatus())
+            //event.target.classList.remove('jump');
+            //event.target.classList.remove('flip');
+            this.#tootEvent(res)
+        } else {
+            console.debug('既存のトークンがないか無効のため、新しいアクセストークンを発行します。');
+            const app = await tooter.createApp().catch(e=>alert(e))
+            console.debug(app)
+            console.debug(app.client_id)
+            console.debug(app.client_secret)
+            console.debug(sessionStorage.getItem(`${domain}-client_id`))
+            console.debug(sessionStorage.getItem(`${domain}-client_secret`))
+            sessionStorage.setItem(`${domain}-client_id`, app.client_id);
+            sessionStorage.setItem(`${domain}-client_secret`, app.client_secret);
+            const status = document.getElementById('status')
+            //sessionStorage.setItem(`status`, (status.hasAttribute('contenteditable')) ? status.innerText : status.value);
+            //sessionStorage.setItem(`status`, this.status);
+            sessionStorage.setItem(`status`, this.#getStatus());
+            tooter.authorize(app.client_id)
+        }
+    }
+    #toast(message, error=false) {
+        const options = {
+            text: message, 
+            position:'center'
+        }
+        if (error) { options.style = { background: "red" } }
+        console.debug(message)
+        if (Toastify) { Toastify(options).showToast(); }
+        //if (Toastify) { Toastify({text: message, position:'center'}).showToast(); }
+        else { alert(message) }
     }
 }
 window.addEventListener('DOMContentLoaded', (event) => {
