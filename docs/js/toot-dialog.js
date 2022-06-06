@@ -38,8 +38,6 @@ class TootDialog extends HTMLElement {
     left: 2.5%;
     padding: 0.25em;
     margin: 0;
-    width: 90%;
-    height: 80%;
     border: 4mm ridge rgba(211, 220, 50, .6);
 }
 #toot-dialog {
