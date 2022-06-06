@@ -295,12 +295,14 @@ button:focus, button:focus img {
         });
         document.addEventListener('click', (event) => {
             if(!event.target.closest(`toot-dialog`)) {
+                this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
                 this.shadowRoot.getElementById('toot-dialog').close();
             }
         });
         this.shadowRoot.getElementById('toot-dialog').addEventListener('keydown', (event) => {
             if ('Escape' === event.key) {
                 event.preventDefault()
+                this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
                 this.shadowRoot.getElementById('toot-dialog').close();
             }
         });
@@ -310,8 +312,8 @@ button:focus, button:focus img {
         //this.shadowRoot.getElementById('toot-dialog').showModal();
         this.shadowRoot.getElementById('toot-dialog').show();
         const status = this.shadowRoot.getElementById('status');
-        status.innerText = this.status
-        status.innerHTML += '<br>' + location.href
+        console.log(this.shadowRoot.querySelector(`toot-button[status]`))
+        status.innerText = (this.shadowRoot.querySelector(`toot-button[status]`)) ? this.shadowRoot.querySelector(`toot-button[status]`).getAttribute('status') : this.status + '\n' + location.href
         this.shadowRoot.getElementById('status').dispatchEvent(new Event('input'))
         console.log(this.shadowRoot.getElementById('status-remaining').innerHTML)
         status.focus();
