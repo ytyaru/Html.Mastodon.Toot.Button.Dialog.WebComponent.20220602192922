@@ -281,6 +281,29 @@ button:focus, button:focus img {
                 //document.getElementById('res').value = JSON.stringify(event.json)
             });
         }
+        this.shadowRoot.getElementById('toot-dialog-close').addEventListener('keydown', (event) => {
+            if ('Tab' === event.key && !event.shiftKey) {
+                event.preventDefault()
+                this.shadowRoot.getElementById('status').focus()
+            }
+        });
+        this.shadowRoot.getElementById('status').addEventListener('keydown', (event) => {
+            if ('Tab' === event.key && event.shiftKey) {
+                event.preventDefault()
+                this.shadowRoot.getElementById('toot-dialog-close').focus()
+            }
+        });
+        document.addEventListener('click', (event) => {
+            if(!event.target.closest(`toot-dialog`)) {
+                this.shadowRoot.getElementById('toot-dialog').close();
+            }
+        });
+        this.shadowRoot.getElementById('toot-dialog').addEventListener('keydown', (event) => {
+            if ('Escape' === event.key) {
+                event.preventDefault()
+                this.shadowRoot.getElementById('toot-dialog').close();
+            }
+        });
     }
     #show(target) {
         target.classList.add('jump');
